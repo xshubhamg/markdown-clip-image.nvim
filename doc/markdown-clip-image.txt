@@ -1,0 +1,62 @@
+*markdown-clip-image.txt*  Paste clipboard screenshots into markdown
+
+Author: markdown-clip-image.nvim
+License: MIT
+Requires: Neovim >= 0.10, wl-clipboard (Wayland) | xclip (X11) | pngpaste (macOS)
+
+==============================================================================
+CONTENTS                                              *markdown-clip-image*
+
+  1. Usage ........................ |markdown-clip-image-usage|
+  2. Commands ...................... |markdown-clip-image-commands|
+  3. Configuration ................. |markdown-clip-image-config|
+  4. Health ........................ |markdown-clip-image-health|
+
+==============================================================================
+1. USAGE                                       *markdown-clip-image-usage*
+
+Copy a screenshot, then in a markdown buffer: >
+
+  <leader>p
+<
+Saves to ./assets/screenshot-<timestamp>.png next to the file and inserts: >
+
+  ![alt](assets/screenshot-....png)
+<
+With embed_style=obsidian: >
+
+  ![[assets/screenshot-....png]]
+<
+
+==============================================================================
+2. COMMANDS                                 *markdown-clip-image-commands*
+
+:PasteImage[!] [markdown|obsidian]        *:PasteImage*
+  Paste clipboard image. With ! bypasses the filetype guard.
+
+==============================================================================
+3. CONFIGURATION                             *markdown-clip-image-config*
+
+>lua
+  require("markdown-clip-image").setup({
+    assets_dir = "assets",        -- relative to md file, or absolute
+    filename_prefix = "screenshot-",
+    filename_format = "%Y-%m-%d-%H-%M-%S",
+    embed_style = "markdown",     -- or "obsidian"
+    prompt_filename = false,
+    prompt_alt_text = false,
+    keymap = "<leader>p",         -- nil to disable
+    filetypes = { "markdown", "mdx", "quarto", "rmd", "vimwiki" },
+  })
+<
+See |M.paste_image()| via: >lua
+  :lua vim.print(vim.inspect(require("markdown-clip-image").get_config()))
+<
+
+==============================================================================
+4. HEALTH                                       *markdown-clip-image-health*
+
+>vim
+  :checkhealth markdown-clip-image
+<
+vim:tw=78:ts=8:ft=help:norl:

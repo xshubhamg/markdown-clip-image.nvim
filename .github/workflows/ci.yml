@@ -5,10 +5,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: JohnnyMorganz/StyLua@v4
+      - uses: JohnnyMorganz/stylua-action@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          version: latest
+          version: v2.1.0
           args: --check .
       - name: Install Neovim
         uses: rhysd/action-setup-vim@v1

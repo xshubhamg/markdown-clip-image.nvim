@@ -124,8 +124,7 @@ local function detect_clipboard()
   end
 
   if vim.fn.executable("xclip") == 1 then
-    local ok, out =
-      system_sync({ "xclip", "-selection", "clipboard", "-t", "TARGETS", "-o" }, 3000)
+    local ok, out = system_sync({ "xclip", "-selection", "clipboard", "-t", "TARGETS", "-o" }, 3000)
     if ok then
       local mime = first_image_mime(out)
       if mime == "image/webp" then
@@ -190,7 +189,8 @@ local function save_clipboard_image(dest, clip)
     -- Binary-safe: text=false keeps stdout as raw bytes.
     local res = vim.system(args, { text = false, timeout = 10000 }):wait()
     if res == nil or res.code ~= 0 or res.stdout == nil or #res.stdout == 0 then
-      return false, string.format("%s failed (code %s)", clip.backend, res and res.code or "timeout")
+      return false,
+        string.format("%s failed (code %s)", clip.backend, res and res.code or "timeout")
     end
     local fh, open_err = io.open(dest, "wb")
     if not fh then
@@ -356,7 +356,12 @@ function M.paste_image(override)
       return
     end
     -- Strip a trailing image ext the user may have typed (case-insensitive).
-    basename = sanitize_basename(input:gsub("%.[Pp][Nn][Gg]$", ""):gsub("%.[Jj][Pp][Ee]?[Gg]$", ""):gsub("%.[Ww][Ee][Bb][Pp]$", ""))
+    basename = sanitize_basename(
+      input
+        :gsub("%.[Pp][Nn][Gg]$", "")
+        :gsub("%.[Jj][Pp][Ee]?[Gg]$", "")
+        :gsub("%.[Ww][Ee][Bb][Pp]$", "")
+    )
     if basename == "" then
       notify("Invalid filename.", vim.log.levels.WARN)
       return
@@ -370,7 +375,10 @@ function M.paste_image(override)
   if vim.fn.isdirectory(assets_abs) == 0 then
     local ok, err = pcall(vim.fn.mkdir, assets_abs, "p")
     if not ok or vim.fn.isdirectory(assets_abs) == 0 then
-      notify("Could not create assets dir: " .. assets_abs .. " " .. tostring(err), vim.log.levels.ERROR)
+      notify(
+        "Could not create assets dir: " .. assets_abs .. " " .. tostring(err),
+        vim.log.levels.ERROR
+      )
       return
     end
   end

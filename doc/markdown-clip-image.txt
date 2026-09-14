@@ -7,56 +7,131 @@ Requires: Neovim >= 0.10, wl-clipboard (Wayland) | xclip (X11) | pngpaste (macOS
 ==============================================================================
 CONTENTS                                              *markdown-clip-image*
 
-  1. Usage ........................ |markdown-clip-image-usage|
-  2. Commands ...................... |markdown-clip-image-commands|
-  3. Configuration ................. |markdown-clip-image-config|
-  4. Health ........................ |markdown-clip-image-health|
+  1. Introduction ............ |markdown-clip-image-intro|
+  2. Usage ................... |markdown-clip-image-usage|
+  3. Commands ................ |markdown-clip-image-commands|
+  4. Configuration ........... |markdown-clip-image-config|
+  5. Lua API ................. |markdown-clip-image-api|
+  6. Health .................. |markdown-clip-image-health|
+  7. Troubleshooting ......... |markdown-clip-image-troubleshooting|
 
 ==============================================================================
-1. USAGE                                       *markdown-clip-image-usage*
+1. INTRODUCTION                               *markdown-clip-image-intro*
 
-Copy a screenshot, then in a markdown buffer: >
+Copy a screenshot, press <leader>p, get an image link at your cursor: >
+
+  ![](assets/screenshot-2026-09-14-15-30-00.png)
+<
+The paste is async (never blocks), undo-joined, and uses |vim.ui.input()|
+for filename/alt prompts, so dressing.nvim / snacks.nvim pickers work.
+
+Backends: `wl-paste` (Wayland) first, then `xclip` (X11), then `pngpaste`
+(macOS). Image types: image/png, image/jpeg, image/webp.
+
+==============================================================================
+2. USAGE                                       *markdown-clip-image-usage*
+
+Copy a screenshot, then in a saved markdown buffer: >
 
   <leader>p
 <
 Saves to ./assets/screenshot-<timestamp>.png next to the file and inserts: >
 
-  ![alt](assets/screenshot-....png)
+  ![](assets/screenshot-....png)
 <
 With embed_style=obsidian: >
 
   ![[assets/screenshot-....png]]
+  ![[assets/screenshot-....png|My alt]]   (only when alt differs from stem)
 <
+Insert behavior: an empty line is replaced; otherwise a padded block is
+inserted below without doubling existing blank lines. The whole paste is a
+single undo step. With empty alt text the cursor lands inside `![]` so you
+can type immediately.
 
 ==============================================================================
-2. COMMANDS                                 *markdown-clip-image-commands*
+3. COMMANDS                                 *markdown-clip-image-commands*
 
 :PasteImage[!] [markdown|obsidian]        *:PasteImage*
-  Paste clipboard image. With ! bypasses the filetype guard.
-
+  Paste the clipboard image using the configured style, or the given one.
+  With [!] the filetype guard is bypassed (any buffer).
+  Examples: >
+    :PasteImage
+    :PasteImage obsidian
+    :PasteImage! markdown
+<
 ==============================================================================
-3. CONFIGURATION                             *markdown-clip-image-config*
+4. CONFIGURATION                             *markdown-clip-image-config*
 
 >lua
   require("markdown-clip-image").setup({
     assets_dir = "assets",        -- relative to md file, or absolute
     filename_prefix = "screenshot-",
-    filename_format = "%Y-%m-%d-%H-%M-%S",
+    filename_format = "%Y-%m-%d-%H-%M-%S", -- os.date format
     embed_style = "markdown",     -- or "obsidian"
-    prompt_filename = false,
-    prompt_alt_text = false,
+
+    prompt_filename = false,      -- vim.ui.input for filename (<Esc> cancels)
+    prompt_alt_text = false,      -- vim.ui.input for alt text
+    default_alt = "",             -- "" for empty, "{filename}" for file stem
+
+    url_encode_spaces = true,     -- "my shot.png" -> "my%20shot.png"
+    use_absolute_path = false,    -- true inserts /abs/path
+    add_blank_lines = true,       -- pad block, never doubles blanks
+    cursor_after_paste = "auto",  -- "auto" | "alt" | "end"
+
+    notify_on_success = true,     -- false for a silent flow
+    show_progress = true,         -- "Saving clipboard image…" notice
+
     keymap = "<leader>p",         -- nil to disable
     filetypes = { "markdown", "mdx", "quarto", "rmd", "vimwiki" },
   })
 <
-See |M.paste_image()| via: >lua
+Invalid values warn and fall back to defaults (see |M.get_config()| via: >lua
   :lua vim.print(vim.inspect(require("markdown-clip-image").get_config()))
 <
+==============================================================================
+5. LUA API                                       *markdown-clip-image-api*
+
+M.setup({opts})                                 *markdown-clip-image-setup*
+  Configure the plugin. Idempotent: safe to call again (keymap autocmds and
+  the :PasteImage command are replaced, not duplicated).
+
+M.paste_image({override})                 *markdown-clip-image-paste_image*
+  Paste now. Fields: embed_style, assets_dir, prompt_filename,
+  prompt_alt_text, allow_any_filetype (what :PasteImage! sets). The save is
+  async; the buffer edit and notifications happen on completion.
+
+M.get_config()                             *markdown-clip-image-get_config*
+  Return a deep copy of the effective config.
+
+M.is_available()                         *markdown-clip-image-is_available*
+  Return `available, hint`. Hint names the backend or carries an install
+  hint, e.g. "none (install wl-clipboard …)".
 
 ==============================================================================
-4. HEALTH                                       *markdown-clip-image-health*
+6. HEALTH                                       *markdown-clip-image-health*
 
 >vim
   :checkhealth markdown-clip-image
 <
+Checks Neovim version, effective config, clipboard backends, whether the
+clipboard currently holds an image, Wayland/X11 session variables, and
+whether the current buffer's assets dir is writable (or will be created).
+
+==============================================================================
+7. TROUBLESHOOTING                 *markdown-clip-image-troubleshooting*
+
+No image in clipboard ......... Copy a screenshot first. On Wayland, copy
+  from a Wayland-native app; XWayland-clipboard can be invisible to wl-paste.
+wl-paste --list-types failed ... No Wayland seat in this shell (SSH, tmux
+  started outside the session, sudo). Check $WAYLAND_DISPLAY.
+No clipboard tool ............. Install wl-clipboard (Wayland), xclip (X11),
+  or pngpaste (macOS, `brew install pngpaste`).
+Save the file first ........... The buffer is unnamed; ./assets resolves
+  relative to the file, so save it first.
+Could not create assets dir ... Parent is not writable; use an absolute
+  assets_dir that is.
+Broken preview ................ The link is relative to the note; moving the
+  note breaks it. Only set use_absolute_path when your setup needs it.
+
 vim:tw=78:ts=8:ft=help:norl:

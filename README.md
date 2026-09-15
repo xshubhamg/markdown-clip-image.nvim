@@ -9,6 +9,11 @@ Non-blocking, undo-friendly, and works with your `vim.ui` picker (dressing, snac
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue)
 ![No dependencies](https://img.shields.io/badge/deps-0-blue)
 
+## Demo
+
+![markdown-clip-image.nvim demo](assets/markdown-clip-image.gif)
+
+- [Demo](#demo)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Install](#install)

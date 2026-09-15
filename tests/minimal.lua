@@ -57,13 +57,21 @@ assert_eq("mime webp", t.mime_to_ext("image/webp"), ".webp")
 assert_eq("mime png fallback", t.mime_to_ext("image/png"), ".png")
 assert_eq("escape parens", t.escape_path("a/b (1).png", false), "a/b \\(1\\).png")
 assert_eq("encode spaces", t.escape_path("a/my shot.png", true), "a/my%20shot.png")
-assert_eq("markdown empty alt", t.make_markup("assets/a.png", "", "markdown", true), "![](assets/a.png)")
+assert_eq(
+  "markdown empty alt",
+  t.make_markup("assets/a.png", "", "markdown", true),
+  "![](assets/a.png)"
+)
 assert_eq(
   "markdown with alt",
   t.make_markup("assets/a.png", "shot", "markdown", true),
   "![shot](assets/a.png)"
 )
-assert_eq("obsidian plain", t.make_markup("assets/a.png", "", "obsidian", true), "![[assets/a.png]]")
+assert_eq(
+  "obsidian plain",
+  t.make_markup("assets/a.png", "", "obsidian", true),
+  "![[assets/a.png]]"
+)
 assert_eq(
   "obsidian alias",
   t.make_markup("assets/a.png", "shot", "obsidian", true),
